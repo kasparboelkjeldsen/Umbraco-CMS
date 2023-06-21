@@ -372,13 +372,40 @@ AND umbracoNode.id <> @id",
                 // based on the PropertyTypes that belong to the removed ContentType.
                 foreach (ContentDto? contentDto in contentDtos)
                 {
-                    // TODO: This could be done with bulk SQL statements
-                    foreach (PropertyTypeDto? propertyType in propertyTypes)
+                    // få den til at mappe property data til nye id'er i stedet for at slette dem
+                    int cameFromComposition = key;
+                    Sql<ISqlContext> cameFromQuery = Sql().Select<ContentTypeDto>(x => x.Alias).From<ContentTypeDto>().Where<ContentTypeDto>(x => x.NodeId == cameFromComposition);
+
+                    string cameFromAlias = Database.ExecuteScalar<string>(cameFromQuery);
+                    var switchingEntity = entity.CompositeContentTypeSwitches?.FirstOrDefault(x => x.From == cameFromAlias);
+
+                    string? goingToAlias = switchingEntity?.To;
+
+                    Sql<ISqlContext> goingToQuery = Sql().Select<ContentTypeDto>(x => x.NodeId).From<ContentTypeDto>().Where<ContentTypeDto>(x => x.Alias == goingToAlias);
+                    int goingToComposition = Database.ExecuteScalar<int>(goingToQuery);
+
+                    //vi kom fra 1056 og skal gå til 1057
+
+                    
+                    // hent alle cms propertytypes for compositions
+                    Sql<ISqlContext> oldPropertyTypesQuery = Sql().Select<PropertyTypeDto>().From<PropertyTypeDto>().Where<PropertyTypeDto>(x => x.ContentTypeId == cameFromComposition);
+                    Sql<ISqlContext> newPropertyTypesQuery = Sql().Select<PropertyTypeDto>().From<PropertyTypeDto>().Where<PropertyTypeDto>(x => x.ContentTypeId == goingToComposition);
+
+                    var oldPropertyTypes = Database.Fetch<PropertyTypeDto>(oldPropertyTypesQuery);
+                    var newPropertyTypes = Database.Fetch<PropertyTypeDto>(newPropertyTypesQuery);
+
+                    //tjek at newProperties indeholder oldproperties
+                    if (newPropertyTypes.Select(x => x.Alias).Intersect(oldPropertyTypes.Select(x => x.Alias)).Count() >= oldPropertyTypes.Count)
                     {
-                        var nodeId = contentDto.NodeId;
-                        var propertyTypeId = propertyType.Id;
-                        Sql<ISqlContext> propertySql = Sql()
-                            .Select<PropertyDataDto>(x => x.Id)
+                        foreach (PropertyTypeDto? propertyType in oldPropertyTypes)
+                        {
+                            // sanity check that the end data type result is the "same" or close enough
+
+                            var nodeId = contentDto.NodeId;
+                            var propertyTypeId = propertyType.Id;
+
+                            Sql<ISqlContext> propertySql = Sql()
+                            .Select<PropertyDataDto>()
                             .From<PropertyDataDto>()
                             .InnerJoin<PropertyTypeDto>()
                             .On<PropertyDataDto, PropertyTypeDto>((left, right) => left.PropertyTypeId == right.Id)
@@ -387,10 +414,38 @@ AND umbracoNode.id <> @id",
                             .Where<ContentVersionDto>(x => x.NodeId == nodeId)
                             .Where<PropertyTypeDto>(x => x.Id == propertyTypeId);
 
-                        // finally delete the properties that match our criteria for removing a ContentType from the composition
-                        Database.Delete<PropertyDataDto>(new Sql(
-                            "WHERE id IN (" + propertySql.SQL + ")",
-                            propertySql.Arguments));
+                            List<PropertyDataDto> updates = Database.Fetch<PropertyDataDto>(propertySql);
+
+                            foreach (PropertyDataDto update in updates)
+                            {
+                                var newId = newPropertyTypes.First(x => x.Alias == propertyType.Alias).Id;
+                                update.PropertyTypeId = newId;
+                                Database.Update(update);
+                            }
+                        }
+                    }
+                    // TODO: This could be done with bulk SQL statements
+                    else
+                    {
+                        foreach (PropertyTypeDto? propertyType in propertyTypes)
+                        {
+                            var nodeId = contentDto.NodeId;
+                            var propertyTypeId = propertyType.Id;
+                            Sql<ISqlContext> propertySql = Sql()
+                                .Select<PropertyDataDto>(x => x.Id)
+                                .From<PropertyDataDto>()
+                                .InnerJoin<PropertyTypeDto>()
+                                .On<PropertyDataDto, PropertyTypeDto>((left, right) => left.PropertyTypeId == right.Id)
+                                .InnerJoin<ContentVersionDto>()
+                                .On<PropertyDataDto, ContentVersionDto>((left, right) => left.VersionId == right.Id)
+                                .Where<ContentVersionDto>(x => x.NodeId == nodeId)
+                                .Where<PropertyTypeDto>(x => x.Id == propertyTypeId);
+
+                            // finally delete the properties that match our criteria for removing a ContentType from the composition
+                            Database.Delete<PropertyDataDto>(new Sql(
+                                "WHERE id IN (" + propertySql.SQL + ")",
+                                propertySql.Arguments));
+                        }
                     }
                 }
             }

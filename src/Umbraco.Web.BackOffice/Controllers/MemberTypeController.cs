@@ -155,9 +155,9 @@ public class MemberTypeController : ContentTypeControllerBase<IMemberType>
     public IActionResult GetAvailableCompositeMemberTypes(
         int contentTypeId,
         [FromQuery] string[] filterContentTypes,
-        [FromQuery] string[] filterPropertyTypes)
+        [FromQuery] PropertyTypeIdAndCompositionId[] filterPropertyTypes)
     {
-        ActionResult<IEnumerable<Tuple<EntityBasic?, bool>>> actionResult = PerformGetAvailableCompositeContentTypes(
+        ActionResult<IEnumerable<Tuple<EntityBasic?, bool, bool, string[]>>> actionResult = PerformGetAvailableCompositeContentTypes(
             contentTypeId,
             UmbracoObjectTypes.MemberType,
             filterContentTypes,

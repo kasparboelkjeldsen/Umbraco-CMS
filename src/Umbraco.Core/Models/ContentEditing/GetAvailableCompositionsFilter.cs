@@ -11,7 +11,7 @@ public class GetAvailableCompositionsFilter
     ///     it are not yet persisted so cannot
     ///     be looked up via the db, they need to be passed in.
     /// </summary>
-    public string[]? FilterPropertyTypes { get; set; }
+    public PropertyTypeIdAndCompositionId[]? FilterPropertyTypes { get; set; }
 
     /// <summary>
     ///     This is normally an empty list but if additional content type aliases are passed in, any content types containing
@@ -24,4 +24,11 @@ public class GetAvailableCompositionsFilter
     ///     Wether the content type is currently marked as an element type
     /// </summary>
     public bool IsElement { get; set; }
+}
+
+public class PropertyTypeIdAndCompositionId
+{
+    public string? PropertyTypeAlias { get; set; }
+    public int CompositionId { get; set; }
+    public string? CompositionAlias { get; set; }
 }

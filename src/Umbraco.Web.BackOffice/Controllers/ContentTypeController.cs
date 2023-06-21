@@ -303,7 +303,7 @@ public class ContentTypeController : ContentTypeControllerBase<IContentType>
     [Authorize(Policy = AuthorizationPolicies.TreeAccessDocumentTypes)]
     public ActionResult GetAvailableCompositeContentTypes(GetAvailableCompositionsFilter filter)
     {
-        ActionResult<IEnumerable<Tuple<EntityBasic?, bool>>> actionResult = PerformGetAvailableCompositeContentTypes(
+        ActionResult<IEnumerable<Tuple<EntityBasic?, bool, bool, string[]>>> actionResult = PerformGetAvailableCompositeContentTypes(
             filter.ContentTypeId,
             UmbracoObjectTypes.DocumentType,
             filter.FilterContentTypes,
@@ -316,7 +316,7 @@ public class ContentTypeController : ContentTypeControllerBase<IContentType>
         }
 
         var result = actionResult.Value?
-            .Select(x => new { contentType = x.Item1, allowed = x.Item2 });
+            .Select(x => new { contentType = x.Item1, allowed = x.Item2, switchable = x.Item3, switchableFrom = x.Item4 });
         return Ok(result);
     }
 

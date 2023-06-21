@@ -207,7 +207,7 @@ public class MediaTypeController : ContentTypeControllerBase<IMediaType>
     [Authorize(Policy = AuthorizationPolicies.TreeAccessMediaTypes)]
     public IActionResult GetAvailableCompositeMediaTypes(GetAvailableCompositionsFilter filter)
     {
-        ActionResult<IEnumerable<Tuple<EntityBasic?, bool>>> actionResult = PerformGetAvailableCompositeContentTypes(
+        ActionResult<IEnumerable<Tuple<EntityBasic?, bool, bool, string[]>>> actionResult = PerformGetAvailableCompositeContentTypes(
             filter.ContentTypeId,
             UmbracoObjectTypes.MediaType,
             filter.FilterContentTypes,

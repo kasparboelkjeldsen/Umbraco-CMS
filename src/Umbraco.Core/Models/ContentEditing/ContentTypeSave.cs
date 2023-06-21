@@ -3,7 +3,11 @@ using System.Runtime.Serialization;
 using Umbraco.Extensions;
 
 namespace Umbraco.Cms.Core.Models.ContentEditing;
-
+public class CompositionSwitchDTO
+{
+    public string? From { get; set; }
+    public string? To { get; set; }
+}
 /// <summary>
 ///     Abstract model used to save content types
 /// </summary>
@@ -19,6 +23,9 @@ public abstract class ContentTypeSave : ContentTypeBasic, IValidatableObject
     // Compositions
     [DataMember(Name = "compositeContentTypes")]
     public IEnumerable<string> CompositeContentTypes { get; set; }
+
+    [DataMember(Name = "compositeContentTypeSwitches")]
+    public IEnumerable<CompositionSwitchDTO>? CompositeContentTypeSwitches { get; set; }
 
     [DataMember(Name = "allowAsRoot")]
     public bool AllowAsRoot { get; set; }

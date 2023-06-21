@@ -282,7 +282,11 @@
                 //get the currently assigned property type aliases - ensure we pass these to the server side filer
                 var propAliasesExisting = _.filter(_.flatten(_.map(scope.model.groups, g => {
                     return _.map(g.properties, p => {
-                        return p.alias;
+                        
+                        return {
+                            PropertyTypeAlias: p.alias,
+                            CompositionId: g.contentTypeId
+                          }
                     });
                 })), f => {
                     return f !== null && f !== undefined;
@@ -476,7 +480,11 @@
                 //get the currently assigned property type aliases - ensure we pass these to the server side filer
                 var propAliasesExisting = _.filter(_.flatten(_.map(scope.model.groups, g => {
                     return _.map(g.properties, p => {
-                        return p.alias;
+                        
+                      return {
+                        PropertyTypeAlias: p.alias,
+                        CompositionId: g.contentTypeId
+                      }
                     });
                 })), f => {
                     return f !== null && f !== undefined;

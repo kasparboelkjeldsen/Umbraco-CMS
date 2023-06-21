@@ -1,8 +1,9 @@
-﻿// Copyright (c) Umbraco.
+// Copyright (c) Umbraco.
 // See LICENSE for more details.
 
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.ContentEditing;
 using Umbraco.Cms.Core.Services;
 
 namespace Umbraco.Extensions;
@@ -49,7 +50,7 @@ public static class ContentTypeServiceExtensions
         IContentTypeComposition? source,
         IContentTypeComposition[] allContentTypes,
         string[]? filterContentTypes = null,
-        string[]? filterPropertyTypes = null,
+        PropertyTypeIdAndCompositionId[]? filterPropertyTypes = null,
         bool isElement = false)
     {
         filterContentTypes = filterContentTypes == null
@@ -57,19 +58,30 @@ public static class ContentTypeServiceExtensions
             : filterContentTypes.Where(x => !x.IsNullOrWhiteSpace()).ToArray();
 
         filterPropertyTypes = filterPropertyTypes == null
-            ? Array.Empty<string>()
-            : filterPropertyTypes.Where(x => !x.IsNullOrWhiteSpace()).ToArray();
+            ? Array.Empty<PropertyTypeIdAndCompositionId>()
+            : filterPropertyTypes.Where(x => !x.PropertyTypeAlias.IsNullOrWhiteSpace()).ToArray();
 
         // create the full list of property types to use as the filter
         // this is the combination of all property type aliases found in the content types passed in for the filter
         // as well as the specific property types passed in for the filter
-        filterPropertyTypes = allContentTypes
-            .Where(c => filterContentTypes.InvariantContains(c.Alias))
-            .SelectMany(c => c.PropertyTypes)
-            .Select(c => c.Alias)
-            .Union(filterPropertyTypes)
-            .ToArray();
+        IEnumerable<IContentTypeComposition> filteredTypes = allContentTypes
+            .Where(c => filterContentTypes.InvariantContains(c.Alias));
 
+        var filterTypes = new List<PropertyTypeIdAndCompositionId>();
+        foreach (IContentTypeComposition filteredType in filteredTypes)
+        {
+            var compositionAlias = filteredType.Alias;
+
+            filterTypes.AddRange(
+                filteredType.PropertyTypes.
+                    Select(s => new PropertyTypeIdAndCompositionId { CompositionAlias = filteredType.Alias, PropertyTypeAlias = s.Alias }));
+
+        }
+        filterPropertyTypes = filterTypes.Union(filterPropertyTypes).ToArray();
+        //.Select(c => new PropertyTypeIdAndCompositionId { PropertyTypeAlias = c.Alias, CompositionId = c.)
+        //.Union(filterPropertyTypes)
+        //.ToArray();
+        //filterPropertyTypes = 
         var sourceId = source?.Id ?? 0;
 
         // find out if any content type uses this content type
@@ -116,7 +128,7 @@ public static class ContentTypeServiceExtensions
             {
                 // need to filter any content types that have matching property aliases that are included in this list
                 // ensure that we don't return if there's any overlapping property aliases from the filtered ones specified
-                return filterPropertyTypes.Intersect(
+                return filterPropertyTypes.Select(s => s.PropertyTypeAlias).Intersect(
                     x.PropertyTypes.Select(p => p.Alias),
                     StringComparer.InvariantCultureIgnoreCase).Any() == false;
             })
@@ -127,15 +139,39 @@ public static class ContentTypeServiceExtensions
         IContentTypeComposition[] ancestors = GetAncestors(source, allContentTypes);
         var ancestorIds = ancestors.Select(x => x.Id).ToArray();
 
+        // get filtered compositions that are switchable, by containing a complete set of matching properties with another composition
+        var switchableCompositions = new Dictionary<string,IContentTypeComposition>();
+
+        var distinctFilteredCompositionIds = filterPropertyTypes.Where(s => s.CompositionId > 0).Select(s =>s.CompositionId).Distinct();
+
+        foreach (int compositionId in distinctFilteredCompositionIds)
+        {
+            var applicableProperties = filterPropertyTypes.Where(x => x.CompositionId == compositionId).Select(s => s.PropertyTypeAlias);
+            // now we have a series of aliases, and we want to see if we can find any -other- composition that contains that entire series
+            var applicableCompositions = list.Where(x => x.Id != compositionId &&
+                x.PropertyTypes.Select(s => s.Alias).Intersect(applicableProperties).Count() >= applicableProperties.Count());
+            // todo - compare the property editors that we don't just match on alias
+            foreach (var composition in applicableCompositions)
+            {
+                string alias = list.First(f => f.Id == compositionId).Alias;
+                switchableCompositions.Add(alias, composition);
+            }
+
+        }
+
+
         // now we can create our result based on what is still available and the ancestors
         var result = list
 
             // not itself
             .Where(x => x.Id != sourceId)
             .OrderBy(x => x.Name)
-            .Select(composition => filtered.Contains(composition)
-                ? new ContentTypeAvailableCompositionsResult(composition, ancestorIds.Contains(composition.Id) == false)
-                : new ContentTypeAvailableCompositionsResult(composition, false)).ToList();
+            .Select(
+                composition => filtered.Contains(composition) && !switchableCompositions.Values.Contains(composition)
+                ? new ContentTypeAvailableCompositionsResult(composition, ancestorIds.Contains(composition.Id) == false, new string[0], false)
+                : switchableCompositions.Values.Contains(composition)
+                ? new ContentTypeAvailableCompositionsResult(composition, ancestorIds.Contains(composition.Id) == false, switchableCompositions.Where(d => d.Value == composition).Select(s => s.Key).ToArray(), true)
+                : new ContentTypeAvailableCompositionsResult(composition, false, new string[0], false)).ToList();
 
         return new ContentTypeAvailableCompositionsResults(ancestors, result);
     }

@@ -1,5 +1,6 @@
 using System.Runtime.Serialization;
 using Umbraco.Cms.Core.Exceptions;
+using Umbraco.Cms.Core.Models.ContentEditing;
 using Umbraco.Cms.Core.Strings;
 
 namespace Umbraco.Cms.Core.Models;
@@ -103,6 +104,8 @@ public abstract class ContentTypeCompositionBase : ContentTypeBase, IContentType
                 .Union(PropertyTypes);
         }
     }
+
+    public IEnumerable<CompositionSwitchDTO>? CompositeContentTypeSwitches { get; set; }
 
     /// <inheritdoc />
     public IEnumerable<IPropertyType> GetOriginalComposedPropertyTypes() => GetRawComposedPropertyTypes();

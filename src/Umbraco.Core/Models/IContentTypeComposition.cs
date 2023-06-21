@@ -1,3 +1,5 @@
+using Umbraco.Cms.Core.Models.ContentEditing;
+
 namespace Umbraco.Cms.Core.Models;
 
 /// <summary>
@@ -21,6 +23,7 @@ public interface IContentTypeComposition : IContentTypeBase
     /// </summary>
     IEnumerable<IPropertyType> CompositionPropertyTypes { get; }
 
+    IEnumerable<CompositionSwitchDTO>? CompositeContentTypeSwitches { get; set; }
     /// <summary>
     ///     Returns a list of content type ids that have been removed from this instance's composition
     /// </summary>

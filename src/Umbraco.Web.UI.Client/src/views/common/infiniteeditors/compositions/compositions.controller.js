@@ -74,6 +74,27 @@
             } else {
                 $scope.model.contentType.compositeContentTypes.splice(index, 1);
             }
+            // if the composition has been deemed switchable we perform the required switch here.
+            if(compositeContentType.switchable) {
+                $scope.model.contentType.compositeContentTypes = $scope.model.contentType.compositeContentTypes.filter(function(item) {
+                    return compositeContentType.switchableFrom.indexOf(item) === -1;
+                });
+                
+                let switchedFrom = null;
+
+                vm.availableGroups.forEach(group => {
+                 
+                    group.compositeContentTypes.forEach(composite => {
+                        if (compositeContentType.switchableFrom.includes(composite.contentType.alias)) {
+                            composite.selected = false;
+                            composite.lineThrough = true; // todo highlight in frontend
+                            switchedFrom = composite.contentType.alias;
+                        }
+                    });
+                });
+
+                $scope.model.contentType.compositeContentTypeSwitches = [{from: switchedFrom, to: compositeContentType.contentType.alias}];
+            }
         }
 
         function submit() {
@@ -111,7 +132,6 @@
                     });
                     return;
                 }
-
                 $scope.model.submit($scope.model);
             }
         }

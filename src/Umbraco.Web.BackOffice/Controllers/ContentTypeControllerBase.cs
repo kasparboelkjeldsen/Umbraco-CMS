@@ -73,11 +73,11 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
     /// <param name="contentTypeId"></param>
     /// <param name="isElement">Whether the composite content types should be applicable for an element type</param>
     /// <returns></returns>
-    protected ActionResult<IEnumerable<Tuple<EntityBasic?, bool>>> PerformGetAvailableCompositeContentTypes(
+    protected ActionResult<IEnumerable<Tuple<EntityBasic?, bool, bool, string[]>>> PerformGetAvailableCompositeContentTypes(
         int contentTypeId,
         UmbracoObjectTypes type,
         string[]? filterContentTypes,
-        string[]? filterPropertyTypes,
+        PropertyTypeIdAndCompositionId[]? filterPropertyTypes,
         bool isElement)
     {
         IContentTypeComposition? source = null;
@@ -142,7 +142,7 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
 
         return availableCompositions.Results
             .Select(x =>
-                new Tuple<EntityBasic?, bool>(UmbracoMapper.Map<IContentTypeComposition, EntityBasic>(x.Composition), x.Allowed))
+                new Tuple<EntityBasic?, bool, bool, string[]>(UmbracoMapper.Map<IContentTypeComposition, EntityBasic>(x.Composition), x.Allowed, x.Switchable, x.SwitchableFrom))
             .Select(x =>
             {
                 //we need to ensure that the item is enabled if it is already selected
@@ -150,7 +150,7 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
                 if (compAliases.Contains(x.Item1?.Alias) && ancestors.Contains(x.Item1?.Alias) == false)
                 {
                     //re-set x to be allowed (NOTE: I didn't know you could set an enumerable item in a lambda!)
-                    x = new Tuple<EntityBasic?, bool>(x.Item1, true);
+                    x = new Tuple<EntityBasic?, bool, bool, string[]>(x.Item1, true, x.Item3, x.Item4);
                 }
 
                 //translate the name

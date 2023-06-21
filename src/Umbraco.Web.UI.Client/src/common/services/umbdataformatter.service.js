@@ -61,7 +61,7 @@
             formatContentTypePostData: function (displayModel, action) {
                 // Create the save model from the display model
                 var saveModel = _.pick(displayModel,
-                    'compositeContentTypes', 'isContainer', 'allowAsRoot', 'allowedTemplates', 'allowedContentTypes',
+                    'compositeContentTypes', 'compositeContentTypeSwitches', 'isContainer', 'allowAsRoot', 'allowedTemplates', 'allowedContentTypes',
                     'alias', 'description', 'thumbnail', 'name', 'id', 'icon', 'trashed',
                     'key', 'parentId', 'alias', 'path', 'allowCultureVariant', 'allowSegmentVariant', 'isElement', 'historyCleanup');
 

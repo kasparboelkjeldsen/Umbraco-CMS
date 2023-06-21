@@ -579,7 +579,7 @@ public class ContentTypeMapDefinition : IMapDefinition
         target.ParentId = source.ParentId;
         target.Path = source.Path;
         target.Thumbnail = source.Thumbnail;
-
+        target.CompositeContentTypeSwitches = source.CompositeContentTypeSwitches;
         target.AllowedAsRoot = source.AllowAsRoot;
 
         var allowedContentTypesUnchanged = target.AllowedContentTypes?.Select(x => x.Id.Value)

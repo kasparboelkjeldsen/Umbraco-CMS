@@ -81,6 +81,11 @@
                                                   disabled="(compositeContentType.allowed === false && !compositeContentType.selected) || compositeContentType.inherited || vm.loadingAlias">
                                     </umb-checkbox>
                                 </div>
+                                <!-- Button here -->
+                                <span class="umb-checkbox-list__item-icon-wrapper" ng-if="compositeContentType.switchable === true">
+                                  <i class="fa fa-exchange"></i>
+                                </span>
+      
 
                                 <label for="umb-overlay-comp-{{compositeContentType.contentType.key}}" class="umb-checkbox-list__item-text" ng-class="{'-faded': compositeContentType.allowed === false && !compositeContentType.selected}">
                                     <span class="umb-checkbox-list__item-icon-wrapper">
