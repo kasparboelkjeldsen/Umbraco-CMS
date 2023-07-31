@@ -48,6 +48,7 @@ public class MediaTypeController : ContentTypeControllerBase<IMediaType>
         IShortStringHelper shortStringHelper,
         IEntityService entityService,
         IMediaService mediaService,
+        IDataTypeService dataTypeService,
         IBackOfficeSecurityAccessor backofficeSecurityAccessor)
         : base(
             cultureDictionary,
@@ -56,7 +57,8 @@ public class MediaTypeController : ContentTypeControllerBase<IMediaType>
             mediaTypeService,
             memberTypeService,
             umbracoMapper,
-            localizedTextService)
+            localizedTextService,
+            dataTypeService)
     {
         _shortStringHelper = shortStringHelper ?? throw new ArgumentNullException(nameof(shortStringHelper));
         _entityService = entityService ?? throw new ArgumentNullException(nameof(entityService));

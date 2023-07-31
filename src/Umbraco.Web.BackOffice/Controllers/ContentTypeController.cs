@@ -175,7 +175,8 @@ public class ContentTypeController : ContentTypeControllerBase<IContentType>
                mediaTypeService,
                memberTypeService,
                umbracoMapper,
-               localizedTextService)
+               localizedTextService,
+               dataTypeService)
         {
             _serializer = serializer;
             _propertyEditors = propertyEditors;

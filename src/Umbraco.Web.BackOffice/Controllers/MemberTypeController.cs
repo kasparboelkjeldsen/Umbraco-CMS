@@ -38,7 +38,8 @@ public class MemberTypeController : ContentTypeControllerBase<IMemberType>
         IUmbracoMapper umbracoMapper,
         ILocalizedTextService localizedTextService,
         IBackOfficeSecurityAccessor backofficeSecurityAccessor,
-        IShortStringHelper shortStringHelper)
+        IShortStringHelper shortStringHelper,
+        IDataTypeService dataTypeService)
         : base(
             cultureDictionary,
             editorValidatorCollection,
@@ -46,7 +47,8 @@ public class MemberTypeController : ContentTypeControllerBase<IMemberType>
             mediaTypeService,
             memberTypeService,
             umbracoMapper,
-            localizedTextService)
+            localizedTextService,
+            dataTypeService)
     {
         _memberTypeService = memberTypeService ?? throw new ArgumentNullException(nameof(memberTypeService));
         _backofficeSecurityAccessor = backofficeSecurityAccessor ??

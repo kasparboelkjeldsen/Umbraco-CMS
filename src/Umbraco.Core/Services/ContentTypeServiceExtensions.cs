@@ -1,6 +1,8 @@
 // Copyright (c) Umbraco.
 // See LICENSE for more details.
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.ContentEditing;
@@ -29,6 +31,7 @@ public static class ContentTypeServiceExtensions
     ///     Returns the available composite content types for a given content type
     /// </summary>
     /// <param name="allContentTypes"></param>
+    /// <param name="dataTypeService"></param>
     /// <param name="filterContentTypes">
     ///     This is normally an empty list but if additional content type aliases are passed in, any content types containing
     ///     those aliases will be filtered out
@@ -49,6 +52,7 @@ public static class ContentTypeServiceExtensions
         this IContentTypeService ctService,
         IContentTypeComposition? source,
         IContentTypeComposition[] allContentTypes,
+        IDataTypeService dataTypeService,
         string[]? filterContentTypes = null,
         PropertyTypeIdAndCompositionId[]? filterPropertyTypes = null,
         bool isElement = false)
@@ -144,20 +148,106 @@ public static class ContentTypeServiceExtensions
 
         var distinctFilteredCompositionIds = filterPropertyTypes.Where(s => s.CompositionId > 0).Select(s =>s.CompositionId).Distinct();
 
+        // Assuming you have access to IContentTypeService ctService
+
+        // Iterate over all distinct composition IDs.
         foreach (int compositionId in distinctFilteredCompositionIds)
         {
-            var applicableProperties = filterPropertyTypes.Where(x => x.CompositionId == compositionId).Select(s => s.PropertyTypeAlias);
-            // now we have a series of aliases, and we want to see if we can find any -other- composition that contains that entire series
-            var applicableCompositions = list.Where(x => x.Id != compositionId &&
-                x.PropertyTypes.Select(s => s.Alias).Intersect(applicableProperties).Count() >= applicableProperties.Count());
-            // todo - compare the property editors that we don't just match on alias
+            // Get a list of properties that belong to the current composition.
+            var applicableProperties = filterPropertyTypes
+                .Where(x => x.CompositionId == compositionId)
+                .ToList();
+
+            // Prepare a list to store compositions that have matching properties.
+            var applicableCompositions = new List<IContentTypeComposition>();
+
+            // Loop over each composition in the list to find matching properties.
+            foreach (var x in list)
+            {
+                // Skip the current composition.
+                if (x.Id == compositionId)
+                    continue;
+
+                // Assume that all properties match until proven otherwise.
+                var allPropertiesMatch = true;
+
+                // Check each property in the list of applicable properties.
+                foreach (var property in applicableProperties)
+                {
+                    // Get the current composition and the other composition to be compared.
+                    var currentComposition = ctService.Get(compositionId);
+                    var otherComposition = ctService.Get(x.Id);
+
+                    // If either composition is null, properties do not match.
+                    if (currentComposition == null || otherComposition == null)
+                    {
+                        allPropertiesMatch = false;
+                        break;
+                    }
+
+                    // Get the property from both compositions.
+                    var currentProperty = currentComposition.PropertyTypes.FirstOrDefault(pt => pt.Alias == property.PropertyTypeAlias);
+                    var otherProperty = otherComposition.PropertyTypes.FirstOrDefault(pt => pt.Alias == property.PropertyTypeAlias);
+
+                    // If either property is null, properties do not match.
+                    if (currentProperty == null || otherProperty == null)
+                    {
+                        allPropertiesMatch = false;
+                        break;
+                    }
+
+                    // Get the property editor alias for both properties.
+                    var currentPropertyEditorAlias = dataTypeService.GetDataType(currentProperty.DataTypeId)?.EditorAlias;
+                    var otherPropertyEditorAlias = dataTypeService.GetDataType(otherProperty.DataTypeId)?.EditorAlias;
+
+                    // Get the property configuration for both properties.
+                    var currentPropertyConfiguration = JsonSerializer.Serialize(dataTypeService.GetDataType(currentProperty.DataTypeId)?.Configuration);
+                    var otherPropertyConfiguration = JsonSerializer.Serialize(dataTypeService.GetDataType(otherProperty.DataTypeId)?.Configuration);
+
+                    // If the property editor alias does not match, properties do not match.
+                    if (currentPropertyEditorAlias != otherPropertyEditorAlias)
+                    {
+                        allPropertiesMatch = false;
+                        break;
+                    }
+
+                    // If the property configuration does not match, properties do not match.
+                    if (currentPropertyConfiguration != otherPropertyConfiguration)
+                    {
+                        allPropertiesMatch = false;
+                        break;
+                    }
+                }
+
+                // If all properties matched, add the composition to the list of applicable compositions.
+                if (allPropertiesMatch)
+                {
+                    applicableCompositions.Add(x);
+                }
+            }
+
+            // Do whatever you need with the list of applicable compositions.
+            // Here, we add them to a dictionary with the alias as key.
             foreach (var composition in applicableCompositions)
             {
                 string alias = list.First(f => f.Id == compositionId).Alias;
                 switchableCompositions.Add(alias, composition);
             }
-
         }
+
+
+        foreach (var composition in applicableCompositions)
+            {
+                string alias = list.First(f => f.Id == compositionId).Alias;
+                if (!switchableCompositions.ContainsKey(alias)) 
+                    switchableCompositions.Add(alias, composition);
+            }
+        }
+
+
+
+
+
 
 
         // now we can create our result based on what is still available and the ancestors

@@ -26,7 +26,7 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
     where TContentType : class, IContentTypeComposition
 {
     private readonly EditorValidatorCollection _editorValidatorCollection;
-
+    private readonly IDataTypeService _dataTypeService;
     protected ContentTypeControllerBase(
         ICultureDictionary cultureDictionary,
         EditorValidatorCollection editorValidatorCollection,
@@ -34,8 +34,10 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
         IMediaTypeService mediaTypeService,
         IMemberTypeService memberTypeService,
         IUmbracoMapper umbracoMapper,
-        ILocalizedTextService localizedTextService)
+        ILocalizedTextService localizedTextService,
+        IDataTypeService dataTypeService)
     {
+        _dataTypeService = dataTypeService;
         _editorValidatorCollection = editorValidatorCollection ??
                                      throw new ArgumentNullException(nameof(editorValidatorCollection));
         CultureDictionary = cultureDictionary ?? throw new ArgumentNullException(nameof(cultureDictionary));
@@ -132,7 +134,7 @@ public abstract class ContentTypeControllerBase<TContentType> : BackOfficeNotifi
         }
 
         ContentTypeAvailableCompositionsResults availableCompositions =
-            ContentTypeService.GetAvailableCompositeContentTypes(source, allContentTypes, filterContentTypes, filterPropertyTypes, isElement);
+            ContentTypeService.GetAvailableCompositeContentTypes(source, allContentTypes, _dataTypeService, filterContentTypes, filterPropertyTypes, isElement);
 
 
         IContentTypeComposition[] currCompositions =

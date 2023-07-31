@@ -75,7 +75,8 @@
                 $scope.model.contentType.compositeContentTypes.splice(index, 1);
             }
             // if the composition has been deemed switchable we perform the required switch here.
-            if(compositeContentType.switchable) {
+          if (compositeContentType.switchable) {
+                console.log(compositeContentType)
                 $scope.model.contentType.compositeContentTypes = $scope.model.contentType.compositeContentTypes.filter(function(item) {
                     return compositeContentType.switchableFrom.indexOf(item) === -1;
                 });
