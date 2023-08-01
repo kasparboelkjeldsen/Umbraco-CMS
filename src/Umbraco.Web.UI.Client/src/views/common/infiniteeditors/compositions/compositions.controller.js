@@ -2,10 +2,8 @@
     "use strict";
 
     function CompositionsController($scope, $location, $filter, $timeout, overlayService, localizationService) {
-
         var vm = this;
         var oldModel = null;
-
         vm.showConfirmSubmit = false;
         vm.loadingAlias = null;
 
@@ -75,26 +73,60 @@
                 $scope.model.contentType.compositeContentTypes.splice(index, 1);
             }
             // if the composition has been deemed switchable we perform the required switch here.
-          if (compositeContentType.switchable) {
-                console.log(compositeContentType)
+          
+            if (compositeContentType.switchable) {
+            
+                // we need to reset the state of the composition we came from if we are trying to go back.
+                const performSwitch = compositeContentType.selected;
+
+
                 $scope.model.contentType.compositeContentTypes = $scope.model.contentType.compositeContentTypes.filter(function(item) {
                     return compositeContentType.switchableFrom.indexOf(item) === -1;
                 });
                 
                 let switchedFrom = null;
-
+                let switchedFromName = null;
                 vm.availableGroups.forEach(group => {
                  
                     group.compositeContentTypes.forEach(composite => {
+
                         if (compositeContentType.switchableFrom.includes(composite.contentType.alias)) {
-                            composite.selected = false;
-                            composite.lineThrough = true; // todo highlight in frontend
-                            switchedFrom = composite.contentType.alias;
+                            composite.selected = !performSwitch;
+                            composite.lineThrough = performSwitch; // todo highlight in frontend
+                            
+                            if (performSwitch) {
+                              switchedFrom = composite.contentType.alias;
+                              switchedFromName = composite.contentType.name;
+                            }
+                            else {
+                                $scope.model.contentType.compositeContentTypes.push(composite.contentType.alias);
+                                const indexToRemove = $scope.model.contentType.compositeContentTypeSwitches.findIndex(switchObj => switchObj.to === composite.contentType.alias);
+
+                                if (indexToRemove !== -1) {
+                                    $scope.model.contentType.compositeContentTypeSwitches.splice(indexToRemove, 1);
+                                }
+                            }
                         }
                     });
                 });
+                if (switchedFrom) {
+                    // Create a new switch object
+                    const newSwitch = {
+                        from: switchedFrom,
+                        to: compositeContentType.contentType.alias,
+                        fromName: switchedFromName,
+                        toName: compositeContentType.contentType.name,
+                        toId: compositeContentType.contentType.id
+                    };
 
-                $scope.model.contentType.compositeContentTypeSwitches = [{from: switchedFrom, to: compositeContentType.contentType.alias}];
+                    // Check if the 'typeswitches' array exists, and if not, initialize it as an empty array
+                    if (!$scope.model.contentType.compositeContentTypeSwitches) {
+                        $scope.model.contentType.compositeContentTypeSwitches = [];
+                    }
+
+                    // Add the new switch object to the 'typeswitches' array
+                    $scope.model.contentType.compositeContentTypeSwitches.push(newSwitch);
+                }
             }
         }
 
@@ -105,6 +137,10 @@
                 var compositionRemoved = false;
                 for (var i = 0; oldModel.compositeContentTypes.length > i; i++) {
                     var oldComposition = oldModel.compositeContentTypes[i];
+                    // detect if the old composition was replaced. Then it wasn't "removed"
+                    if ($scope.model.contentType.compositeContentTypeSwitches.find(f => f.from == oldComposition))
+                        continue;
+
                     if (_.contains($scope.model.compositeContentTypes, oldComposition) === false) {
                         compositionRemoved = true;
                     }

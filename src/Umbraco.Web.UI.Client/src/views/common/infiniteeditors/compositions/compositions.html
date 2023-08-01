@@ -72,22 +72,22 @@
                             </li>
                             <li class="umb-checkbox-list__item"
                                 ng-repeat="compositeContentType in group.compositeContentTypes | orderBy:'contentType.name' | filter:vm.searchTerm"
-                                ng-class="{'-disabled': (compositeContentType.allowed === false && !compositeContentType.selected) || compositeContentType.inherited, '-selected': compositeContentType.selected}">
+                                ng-class="{'-disabled': (compositeContentType.allowed === false && !compositeContentType.selected) || compositeContentType.inherited || compositeContentType.lineThrough, '-selected': compositeContentType.selected}">
 
                                 <div class="umb-checkbox-list__item-checkbox" ng-class="{'-selected': compositeContentType.selected }">
                                     <umb-checkbox input-id="umb-overlay-comp-{{compositeContentType.contentType.key}}"
                                                   model="compositeContentType.selected"
                                                   on-change="vm.selectCompositeContentType(compositeContentType)"
-                                                  disabled="(compositeContentType.allowed === false && !compositeContentType.selected) || compositeContentType.inherited || vm.loadingAlias">
+                                                  disabled="(compositeContentType.allowed === false && !compositeContentType.selected) || compositeContentType.inherited || vm.loadingAlias || compositeContentType.lineThrough">
                                     </umb-checkbox>
                                 </div>
-                                <!-- Button here -->
+                                <!-- switchable icon here -->
                                 <span class="umb-checkbox-list__item-icon-wrapper" ng-if="compositeContentType.switchable === true">
                                   <i class="fa fa-exchange"></i>
                                 </span>
       
 
-                                <label for="umb-overlay-comp-{{compositeContentType.contentType.key}}" class="umb-checkbox-list__item-text" ng-class="{'-faded': compositeContentType.allowed === false && !compositeContentType.selected}">
+                                <label for="umb-overlay-comp-{{compositeContentType.contentType.key}}" class="umb-checkbox-list__item-text" ng-class="[{'-faded': compositeContentType.allowed === false && !compositeContentType.selected}, {'-linethrough': compositeContentType.lineThrough }]">
                                     <span class="umb-checkbox-list__item-icon-wrapper">
                                         <umb-icon icon="{{compositeContentType.contentType.icon}}" class="umb-checkbox-list__item-icon" ng-class="{'o-0': compositeContentType.contentType.alias === vm.loadingAlias}"></umb-icon>
                                         <span ng-if="compositeContentType.contentType.alias === vm.loadingAlias" class="umb-button__progress -black umb-checkbox-list__item-checkbox-progress"></span>

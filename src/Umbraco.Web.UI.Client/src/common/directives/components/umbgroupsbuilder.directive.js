@@ -387,7 +387,6 @@
             };
 
             scope.openCompositionsDialog = () => {
-
                 scope.compositionsDialogModel = {
                     contentType: scope.model,
                     compositeContentTypes: scope.model.compositeContentTypes,
@@ -395,6 +394,29 @@
                     size: "small",
                     submit: () => {
                         editorService.close();
+
+                        // expand submit with updating state of compositions in the editor to reflect potential changes.
+                        const switches = scope.compositionsDialogModel.contentType.compositeContentTypeSwitches;
+
+                        if (switches && switches.length) {
+                            scope.model.groups.forEach(group => {
+                                group.parentTabContentTypeNames.forEach((tn, i) => {
+                                    const sw = switches.find(f => f.fromName == tn);
+                                    if (sw) {
+                                        group.parentTabContentTypeNames[i] = sw.toName;
+                                        group.parentTabContentTypes[i] = sw.toId;
+                                    }
+                                });
+
+                                group.properties.forEach(prop => {
+                                    const sw = switches.find(f => f.fromName == prop.contentTypeName);
+                                    if (sw) {
+                                        prop.contentTypeName = sw.toName;
+                                        prop.contentTypeId = sw.toId;
+                                    }
+                                });
+                            })  
+                        }
                     },
                     close: oldModel => {
                         // reset composition changes

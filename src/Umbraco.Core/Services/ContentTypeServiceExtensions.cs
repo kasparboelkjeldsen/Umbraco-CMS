@@ -231,24 +231,10 @@ public static class ContentTypeServiceExtensions
             foreach (var composition in applicableCompositions)
             {
                 string alias = list.First(f => f.Id == compositionId).Alias;
-                switchableCompositions.Add(alias, composition);
-            }
-        }
-
-
-        foreach (var composition in applicableCompositions)
-            {
-                string alias = list.First(f => f.Id == compositionId).Alias;
-                if (!switchableCompositions.ContainsKey(alias)) 
+                if (!switchableCompositions.ContainsKey(alias))
                     switchableCompositions.Add(alias, composition);
             }
         }
-
-
-
-
-
-
 
         // now we can create our result based on what is still available and the ancestors
         var result = list
