@@ -396,6 +396,7 @@
                         editorService.close();
 
                         // expand submit with updating state of compositions in the editor to reflect potential changes.
+                        // TODO : if new composition implements more properties, this should be updated to reflect that.
                         const switches = scope.compositionsDialogModel.contentType.compositeContentTypeSwitches;
 
                         if (switches && switches.length) {
